@@ -1,0 +1,30 @@
+services:
+  web:
+    build: .
+    restart: always
+    env_file:
+      - path: .env
+        required: false
+    # Permite llegar al Postgres del servidor (fuera de Docker) como host.docker.internal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - static_volume:/app/staticfiles
+      - db_volume:/app/data  # solo se usa si DATABASE_URL apunta a SQLite
+    # Sin ports: solo nginx llega a gunicorn, por la red interna de compose.
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    depends_on:
+      - web
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles:ro
+    ports:
+      # Puerto del servidor donde escucha nginx (APP_PORT en el .env); uno distinto por proyecto.
+      - "127.0.0.1:${APP_PORT:-8015}:80"
+
+volumes:
+  static_volume:
+  db_volume:
