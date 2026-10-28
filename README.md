@@ -27,7 +27,7 @@ En local se usa SQLite (`db.sqlite3`) y no hace falta Docker.
 | `Dockerfile` | Imagen de la app; arranca con `entrypoint.sh` |
 | `entrypoint.sh` | En cada arranque: `migrate`, `collectstatic` y luego Gunicorn |
 | `docker-compose.yml` | Servicios `web` (Gunicorn) y `nginx` |
-| `deploy/nginx.conf` | Nginx: sirve `/static/` y pasa el resto a Gunicorn |
+| `deploy/nginx.conf` | Nginx: sirve `/static/` y `/media/` y pasa el resto a Gunicorn |
 | `.env.example` | Variables de configuración documentadas |
 
 ## Despliegue en el servidor
@@ -100,4 +100,15 @@ docker compose up -d --build
 
 Si solo cambia el `.env`: `docker compose up -d` (no `restart`, que conserva las variables viejas).
 
-> `docker compose down -v` borra los volúmenes (estáticos y la base SQLite). Para parar sin perder datos: `docker compose down`.
+> `docker compose down -v` borra los volúmenes (estáticos, media y la base SQLite). Para parar sin perder datos: `docker compose down`.
+
+### Media (archivos subidos)
+
+Los archivos subidos (`FileField`/`ImageField`) se guardan en el volumen `media_volume` y nginx los sirve en `/media/`.
+Sobreviven a los rebuilds, pero a diferencia de los estáticos no se regeneran: el volumen es la única copia. Backup:
+
+```bash
+docker run --rm -v <proyecto>_media_volume:/data -v "$PWD":/backup alpine tar czf /backup/media.tgz -C /data .
+```
+
+`<proyecto>` es el nombre de la carpeta (ver `docker volume ls`). El límite de subida es `client_max_body_size` en `deploy/nginx.conf`.

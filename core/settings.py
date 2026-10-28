@@ -131,6 +131,9 @@ FORCE_SCRIPT_NAME = APP_PATH or None
 STATIC_URL = f'{APP_PATH}/static/'
 # En producción collectstatic los deja aquí y nginx los sirve.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Archivos subidos por los usuarios. En producción viven en el volumen media_volume y nginx los sirve.
+MEDIA_URL = f'{APP_PATH}/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
